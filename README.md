@@ -119,7 +119,7 @@ Ouvrir `index.html` directement dans un navigateur — aucune installation requi
 
 ## Auteur
 
-**De Mohammad Aima - Support MAPS DSIO** — 
+**De Mohammad Aima - Support MAPS DSIO** -
 
 ---
 
