@@ -1,0 +1,706 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Simulateur de Remboursement MGC</title>
+<style>
+:root{--bleu:#003f7f;--bc:#0066cc;--vert:#00875a;--or:#e07000;--gris:#f4f6f9;--g2:#e8ecf1;--txt:#1a2535;--brd:#cdd5e0;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Segoe UI',Arial,sans-serif;background:var(--gris);color:var(--txt);font-size:14px;}
+header{background:var(--bleu);color:white;padding:14px 24px;}
+header h1{font-size:18px;font-weight:700;}
+header p{font-size:12px;opacity:.7;margin-top:2px;}
+.wrap{max-width:960px;margin:24px auto;padding:0 16px;}
+.card{background:white;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,.08);margin-bottom:20px;overflow:hidden;}
+.ch{background:var(--bleu);color:white;padding:12px 20px;font-weight:600;font-size:13px;}
+.cb{padding:20px;}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;}
+label{display:block;font-size:11px;font-weight:700;color:#556;margin-bottom:4px;text-transform:uppercase;letter-spacing:.4px;}
+select,input[type=number]{width:100%;padding:9px 11px;border:1.5px solid var(--brd);border-radius:6px;font-size:13px;color:var(--txt);background:white;}
+select:focus,input:focus{outline:none;border-color:var(--bc);}
+.bp{background:var(--bleu);color:white;width:100%;padding:10px;font-weight:700;font-size:14px;border:none;border-radius:7px;cursor:pointer;}
+.bp:hover{background:var(--bc);}
+.br{background:var(--g2);color:var(--txt);font-size:12px;padding:7px 16px;font-weight:700;border:none;border-radius:7px;cursor:pointer;}
+.hint{background:#eef4ff;border-left:3px solid var(--bc);padding:8px 12px;border-radius:4px;font-size:12px;color:#334;margin-top:6px;display:none;}
+#res{display:none;}
+.rh{background:var(--vert);color:white;padding:16px 20px;}
+.rt{font-size:16px;font-weight:700;}
+.rs{font-size:12px;opacity:.85;margin-top:4px;}
+.ag{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;padding:16px;}
+.ab{text-align:center;padding:14px 8px;border-radius:8px;border:1.5px solid var(--brd);}
+.ab .lbl{font-size:11px;color:#667;font-weight:600;text-transform:uppercase;margin-bottom:4px;}
+.ab .val{font-size:22px;font-weight:800;}
+.ab.secu .val{color:var(--or);}
+.ab.mgc .val{color:var(--bleu);}
+.ab.rac .val{color:#c00;}
+.cs{background:#fffbea;border:1.5px solid #e8c820;border-radius:8px;margin:0 16px 16px;padding:16px;}
+.cs h3{font-size:13px;font-weight:700;color:#7a5000;margin-bottom:12px;}
+.stp{display:flex;gap:10px;padding:7px 0;border-bottom:1px dashed #e8d070;align-items:flex-start;}
+.stp:last-child{border-bottom:none;}
+.sn{background:#f5d030;color:#6a4000;border-radius:50%;width:22px;height:22px;min-width:22px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;margin-top:1px;}
+.sb{font-size:12.5px;line-height:1.7;}
+.snm{font-weight:700;display:block;}
+.sf{font-family:'Courier New',monospace;background:white;padding:1px 6px;border-radius:3px;border:1px solid #ddc020;font-size:12px;}
+.sr{font-weight:700;color:#6a4000;margin-left:4px;}
+.nb{background:#f0f7ff;border:1px solid #c0d8f0;border-radius:8px;margin:0 16px 16px;padding:14px 16px;font-size:12px;line-height:1.7;}
+.nb h4{font-weight:700;color:var(--bleu);margin-bottom:6px;font-size:12px;}
+.tag{display:inline-block;background:var(--bleu);color:white;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600;margin-right:4px;}
+/* Tableau comparatif */
+#compCard{display:none;}
+.comp-scroll{overflow-x:auto;margin-top:4px;}
+.comp-tbl{border-collapse:collapse;width:100%;font-size:12px;min-width:560px;}
+.comp-tbl th{background:var(--bleu);color:white;padding:7px 10px;text-align:center;font-size:11px;font-weight:700;white-space:nowrap;}
+.comp-tbl th.left{text-align:left;}
+.comp-tbl td{padding:6px 10px;border-bottom:1px solid #e8ecf1;text-align:right;}
+.comp-tbl td.name{text-align:left;font-weight:600;color:#334;white-space:nowrap;}
+.comp-tbl tr:hover td{background:#f0f6ff;}
+.comp-tbl tr.selected td{background:#e8f0fe;font-weight:700;}
+.comp-tbl tr.selected td.name{color:var(--bleu);}
+.comp-tbl td.secu{color:var(--or);}
+.comp-tbl td.mgc{color:var(--bc);font-weight:700;}
+.comp-tbl td.rac{color:#c00;font-weight:700;}
+.comp-tbl td.rac-zero{color:var(--vert);font-weight:700;}
+.comp-tbl tr.grp-hd td{background:#f4f6f9;font-weight:700;font-size:11px;color:#556;text-align:left;padding:5px 10px;border-bottom:none;}
+@media(max-width:640px){.g2,.g3{grid-template-columns:1fr;}.ag{grid-template-columns:1fr 1fr;}}
+</style>
+</head>
+<body>
+<header>
+  <h1>&#x1F3E5; Simulateur de Remboursement MGC</h1>
+  <p>22 régimes Sécurité Sociale · Calcul détaillé étape par étape</p>
+</header>
+<div class="wrap">
+  <div class="card">
+    <div class="ch">&#x2699;&#xFE0F; Paramètres</div>
+    <div class="cb">
+      <div class="g2" style="margin-bottom:16px">
+        <div>
+          <label>Contrat MGC</label>
+          <select id="contrat">
+            <option value="">— Choisir un contrat —</option>
+            <optgroup label="Zen">
+              <option value="zen_hospi">Zen Hospi</option>
+              <option value="zen_eco">Zen Éco</option>
+              <option value="zen">Zen</option>
+              <option value="zen_plus">Zen Plus</option>
+              <option value="zen_extra">Zen Extra</option>
+            </optgroup>
+            <optgroup label="Essentiel / Confort">
+              <option value="essentiel_eco">Essentiel Éco</option>
+              <option value="essentiel">Essentiel</option>
+              <option value="essentiel_plus">Essentiel Plus</option>
+              <option value="serenite">Sérénité</option>
+              <option value="confort">Confort</option>
+              <option value="confort_plus">Confort Plus</option>
+              <option value="confort_extra">Confort Extra</option>
+            </optgroup>
+            <optgroup label="Essentiel Labellisée">
+              <option value="eco_lab">Essentiel Éco Labellisée</option>
+              <option value="ess_lab">Essentiel Labellisée</option>
+              <option value="essplus_lab">Essentiel Plus Labellisée</option>
+              <option value="ser_lab">Sérénité Labellisée</option>
+              <option value="cnf_lab">Confort Labellisée</option>
+              <option value="cnfp_lab">Confort Plus Labellisée</option>
+              <option value="cnfx_lab">Confort Extra Labellisée</option>
+            </optgroup>
+            <optgroup label="Ritmavie">
+              <option value="ritmavie_100">Ritmavie 100</option>
+              <option value="ritmavie_200">Ritmavie 200</option>
+              <option value="ritmavie_300">Ritmavie 300</option>
+              <option value="ritmavie_400">Ritmavie 400</option>
+            </optgroup>
+            <optgroup label="MGC EXPRESS">
+              <option value="express_170">MGC EXPRESS 170</option>
+              <option value="express_250">MGC EXPRESS 250</option>
+              <option value="express_300">MGC EXPRESS 300</option>
+            </optgroup>
+            <optgroup label="Senior EXPRESS">
+              <option value="senior_160">MGC Senior EXPRESS 160</option>
+              <option value="senior_280">MGC Senior EXPRESS 280</option>
+              <option value="senior_320">MGC Senior EXPRESS 320</option>
+            </optgroup>
+          </select>
+        </div>
+        <div>
+          <label>Régime de Sécurité Sociale</label>
+          <select id="regime" onchange="showHint()">
+            <option value="">— Choisir un régime —</option>
+            <optgroup label="Régime général">
+              <option value="RG">Régime Général (salarié privé)</option>
+              <option value="TNS">Travailleur Non Salarié (TNS)</option>
+              <option value="AE">Auto-entrepreneur</option>
+              <option value="CHOM">Chômeur indemnisé (ARE)</option>
+            </optgroup>
+            <optgroup label="Fonction publique">
+              <option value="FPE">Fonction publique d'État</option>
+              <option value="FPT">Fonction publique territoriale</option>
+              <option value="FPH">Fonction publique hospitalière</option>
+            </optgroup>
+            <optgroup label="Régimes agricoles">
+              <option value="MSAL">MSA – Salarié agricole</option>
+              <option value="MEXP">MSA – Exploitant agricole</option>
+            </optgroup>
+            <optgroup label="Régimes spéciaux">
+              <option value="SNCF_A">Régime SNCF — Actif</option>
+              <option value="SNCF_R">Régime SNCF — Retraité</option>
+              <option value="SNCF">Régime SNCF (générique)</option>
+              <option value="RATP">Régime RATP</option>
+              <option value="MINE">Régime des Mines</option>
+              <option value="ENRM">Marins (ENIM)</option>
+              <option value="CVMC">Clergé (CAVIMAC)</option>
+              <option value="BDFR">Banque de France</option>
+              <option value="PARL">Sénat / Assemblée Nationale</option>
+            </optgroup>
+            <optgroup label="Étudiants / Jeunes">
+              <option value="ETUD">Étudiant</option>
+              <option value="APPR">Apprenti</option>
+            </optgroup>
+            <optgroup label="Situations particulières">
+              <option value="AYDT">Ayant droit (conjoint / enfant)</option>
+              <option value="CSS">Bénéficiaire CSS (ex-CMU-C)</option>
+            </optgroup>
+          </select>
+          <div class="hint" id="hintBox"></div>
+        </div>
+      </div>
+      <div class="g3" style="margin-bottom:14px">
+        <div>
+          <label>Acte / Prestation</label>
+          <select id="acte" onchange="prefill()">
+            <option value="">— Choisir —</option>
+            <optgroup label="Médecine générale">
+              <option value="go">Généraliste OPTAM</option>
+              <option value="gh">Généraliste hors OPTAM</option>
+            </optgroup>
+            <optgroup label="Spécialistes">
+              <option value="so">Spécialiste OPTAM</option>
+              <option value="sh">Spécialiste hors OPTAM</option>
+              <option value="psy">Psychologue (remb. AMO)</option>
+            </optgroup>
+            <optgroup label="Chirurgie">
+              <option value="co">Chirurgie hors hospi OPTAM</option>
+              <option value="ch">Chirurgie hors hospi hors OPTAM</option>
+            </optgroup>
+            <optgroup label="Hospitalisation">
+              <option value="hs">Séjour hospitalier</option>
+              <option value="hc">Honoraires chirurgien OPTAM</option>
+              <option value="fj">Forfait journalier (22,06 euros/j)</option>
+            </optgroup>
+            <optgroup label="Dentaire">
+              <option value="dp1">Prothèse Panier 1 (RAC 0)</option>
+              <option value="dp2">Prothèse Panier 2 (maîtrisé)</option>
+              <option value="di">Implant dentaire</option>
+              <option value="orth">Orthodontie</option>
+            </optgroup>
+            <optgroup label="Optique">
+              <option value="os">Verres simples</option>
+              <option value="oc">Verres complexes</option>
+              <option value="ol">Lentilles de contact</option>
+            </optgroup>
+            <optgroup label="Autres">
+              <option value="ki">Kinésithérapie</option>
+              <option value="la">Analyses de laboratoire</option>
+              <option value="ra">Imagerie médicale OPTAM</option>
+              <option value="m65">Médicaments remboursés 65%</option>
+              <option value="m30">Médicaments remboursés 30%</option>
+            </optgroup>
+          </select>
+        </div>
+        <div>
+          <label>Montant réel payé (euros)</label>
+          <input type="number" id="montant" placeholder="Laisser vide = montant typique" min="0" step="0.01">
+        </div>
+        <div style="display:flex;align-items:flex-end">
+          <div style="width:100%">
+            <label>&nbsp;</label>
+            <button class="bp" onclick="simuler()">&#x1F50D; Calculer</button>
+          </div>
+        </div>
+      </div>
+      <div style="text-align:right">
+        <button class="br" onclick="resetForm()">&#x21BA; Réinitialiser</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="res" class="card">
+    <div class="rh"><div class="rt" id="rTitle">—</div><div class="rs" id="rSub">—</div></div>
+    <div class="ag">
+      <div class="ab"><div class="lbl">Montant payé</div><div class="val" id="rM">—</div></div>
+      <div class="ab secu"><div class="lbl">Remb. Sécu (AMO)</div><div class="val" id="rS">—</div></div>
+      <div class="ab mgc"><div class="lbl">Remb. MGC (AMC)</div><div class="val" id="rG">—</div></div>
+      <div class="ab rac"><div class="lbl">Reste à charge</div><div class="val" id="rR">—</div></div>
+    </div>
+    <div class="cs"><h3>&#x1F4D0; Détail du calcul — étape par étape</h3><div id="steps"></div></div>
+    <div class="nb"><h4>Informations complémentaires</h4><div id="notes"></div></div>
+  </div>
+
+  <div id="compCard" class="card">
+    <div class="ch">&#x1F4CB; Comparatif tous contrats — <span id="compTitle">—</span></div>
+    <div class="cb" style="padding:12px 16px">
+      <p style="font-size:12px;color:#556;margin-bottom:10px">
+        Résultats pour <strong id="compActe">—</strong> · Régime <strong id="compRegime">—</strong> · Montant <strong id="compMontant">—</strong>.
+        La ligne <span style="background:#e8f0fe;padding:1px 6px;border-radius:3px;font-weight:700;color:var(--bleu)">surlignée</span> correspond au contrat sélectionné.
+      </p>
+      <div class="comp-scroll">
+        <table class="comp-tbl">
+          <thead>
+            <tr>
+              <th class="left" style="min-width:170px">Contrat</th>
+              <th>Typique (€)</th>
+              <th>Sécu AMO (€)</th>
+              <th>MGC AMC (€)</th>
+              <th>RAC (€)</th>
+            </tr>
+          </thead>
+          <tbody id="compBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="ch">&#x1F4CA; Tableau complet — Structure TDG_QUARK &times; 4 montants simulés</div>
+    <div class="cb">
+      <p style="font-size:13px;color:#334;margin-bottom:14px;line-height:1.7">
+        Fichier Excel reproduisant <strong>exactement la structure du TDG_QUARK</strong> (224 lignes × 35 contrats).
+        Pour chaque intersection <strong>acte × contrat</strong>, 4 colonnes calculées. 4 onglets : Légende + RG + SNCF Actifs + SNCF Retraités.
+      </p>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:18px">
+        <div style="background:#f4f6f9;border-radius:7px;padding:10px;text-align:center">
+          <div style="font-size:10px;color:#667;font-weight:700;text-transform:uppercase;margin-bottom:4px">Montant typique</div>
+          <div style="font-size:18px;font-weight:800;color:#444">€ réel</div>
+        </div>
+        <div style="background:#fff3e0;border-radius:7px;padding:10px;text-align:center">
+          <div style="font-size:10px;color:#667;font-weight:700;text-transform:uppercase;margin-bottom:4px">Remb. Sécu</div>
+          <div style="font-size:18px;font-weight:800;color:#e07000">AMO</div>
+        </div>
+        <div style="background:#dce9f8;border-radius:7px;padding:10px;text-align:center">
+          <div style="font-size:10px;color:#667;font-weight:700;text-transform:uppercase;margin-bottom:4px">Remb. MGC</div>
+          <div style="font-size:18px;font-weight:800;color:#0066cc">AMC</div>
+        </div>
+        <div style="background:#fde8e8;border-radius:7px;padding:10px;text-align:center">
+          <div style="font-size:10px;color:#667;font-weight:700;text-transform:uppercase;margin-bottom:4px">Reste à charge</div>
+          <div style="font-size:18px;font-weight:800;color:#c00">RAC</div>
+        </div>
+      </div>
+      <div style="text-align:center">
+        <a href="remboursements_mgc_v3.xlsx" download="Remboursements_MGC_Simules.xlsx"
+           style="display:inline-block;background:#003f7f;color:white;padding:12px 28px;border-radius:8px;font-weight:700;font-size:14px;text-decoration:none">
+          &#x1F4E5; Télécharger le fichier Excel
+        </a>
+        <p style="font-size:11px;color:#888;margin-top:8px">
+          224 lignes &times; 35 contrats &times; 4 montants &middot; 4 onglets (Légende, RG, SNCF Actifs, SNCF Retraités)
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+
+var C={
+  zen_hospi:{label:"Zen Hospi",go:"-",gh:"-",so:"-",sh:"-",psy:"-",co:"-",ch:"-",hs:3,hc:2,fj:"fr",dp1:"-",dp2:"-",di:0,orth:0,os:0,oc:0,ol:0,ki:"-",la:"-",ra:"-",m65:"-",m30:"-",note:"Contrat hospitalier uniquement. Pas de soins courants."},
+  zen_eco:{label:"Zen Eco",go:1,gh:1,so:1,sh:1,psy:1,co:1,ch:1,hs:1,hc:1,fj:"fr",dp1:1,dp2:1,di:0,orth:1,os:50,oc:80,ol:60,ki:1,la:1,ra:1,m65:1,m30:"-",note:"Contrat economique."},
+  zen:{label:"Zen",go:1,gh:1,so:1.5,sh:1,psy:1,co:1.5,ch:1,hs:1.5,hc:1.5,fj:"fr",dp1:1.25,dp2:1.25,di:150,orth:1.5,os:100,oc:130,ol:100,ki:1,la:1,ra:1,m65:1,m30:"-",note:"Contrat Zen standard."},
+  zen_plus:{label:"Zen Plus",go:1,gh:1,so:2,sh:1,psy:1,co:2,ch:1,hs:2,hc:2,fj:"fr",dp1:1.5,dp2:1.5,di:250,orth:2,os:150,oc:200,ol:150,ki:1,la:1,ra:1,m65:1,m30:"-",note:""},
+  zen_extra:{label:"Zen Extra",go:1,gh:1,so:3,sh:1.5,psy:1,co:3,ch:1.5,hs:3,hc:3,fj:"fr",dp1:2,dp2:2,di:400,orth:3,os:220,oc:300,ol:200,ki:1,la:1,ra:1,m65:1,m30:"-",note:"Contrat haut de gamme."},
+  essentiel_eco:{label:"Essentiel Eco",go:1,gh:1,so:1,sh:1,psy:1,co:1,ch:1,hs:1,hc:1,fj:"fr",dp1:1,dp2:1,di:0,orth:1,os:50,oc:80,ol:60,ki:1,la:1,ra:1,m65:1,m30:"-",note:""},
+  essentiel:{label:"Essentiel",go:1,gh:1,so:1.5,sh:1,psy:1,co:1.5,ch:1,hs:1.5,hc:1.5,fj:"fr",dp1:1.25,dp2:1.25,di:150,orth:1.5,os:100,oc:130,ol:100,ki:1,la:1,ra:1,m65:1,m30:"-",note:""},
+  essentiel_plus:{label:"Essentiel Plus",go:1,gh:1,so:2,sh:1,psy:1,co:2,ch:1,hs:2,hc:2,fj:"fr",dp1:1.5,dp2:1.5,di:250,orth:2,os:150,oc:200,ol:150,ki:1,la:1,ra:1,m65:1,m30:"-",note:""},
+  serenite:{label:"Serenite",go:1,gh:1,so:2,sh:1,psy:1,co:2,ch:1,hs:2,hc:2,fj:"fr",dp1:1.5,dp2:1.5,di:250,orth:2,os:150,oc:200,ol:150,ki:1,la:1,ra:1,m65:1,m30:"-",note:""},
+  confort:{label:"Confort",go:1,gh:1,so:2.5,sh:1,psy:1,co:2.5,ch:1,hs:2.5,hc:2.5,fj:"fr",dp1:1.75,dp2:1.75,di:300,orth:2.5,os:175,oc:240,ol:175,ki:1,la:1,ra:1,m65:1,m30:"-",note:""},
+  confort_plus:{label:"Confort Plus",go:1,gh:1,so:3,sh:1.5,psy:1,co:3,ch:1.5,hs:3,hc:3,fj:"fr",dp1:2,dp2:2,di:400,orth:3,os:220,oc:300,ol:200,ki:1,la:1,ra:1,m65:1,m30:"-",note:""},
+  confort_extra:{label:"Confort Extra",go:1,gh:1,so:3.5,sh:2,psy:1,co:3.5,ch:2,hs:3.5,hc:3.5,fj:"fr",dp1:2.5,dp2:2.5,di:500,orth:3.5,os:280,oc:380,ol:250,ki:1,la:1,ra:1,m65:1,m30:"-",note:""},
+  ritmavie_100:{label:"Ritmavie 100",go:1,gh:1,so:1,sh:1,psy:1,co:1,ch:1,hs:1,hc:1,fj:"fr",dp1:1,dp2:1,di:0,orth:1,os:50,oc:80,ol:60,ki:1,la:1,ra:1,m65:1,m30:"-",note:""},
+  ritmavie_200:{label:"Ritmavie 200",go:1,gh:1,so:1.5,sh:1,psy:1,co:1.5,ch:1,hs:1.5,hc:1.5,fj:"fr",dp1:1.25,dp2:1.25,di:200,orth:1.5,os:100,oc:130,ol:100,ki:1,la:1,ra:1,m65:1,m30:"-",note:""},
+  ritmavie_300:{label:"Ritmavie 300",go:1,gh:1,so:2,sh:1,psy:1,co:2,ch:1,hs:2,hc:2,fj:"fr",dp1:1.5,dp2:1.5,di:300,orth:2,os:150,oc:200,ol:150,ki:1,la:1,ra:1,m65:1,m30:"-",note:""},
+  ritmavie_400:{label:"Ritmavie 400",go:1,gh:1,so:3,sh:1.5,psy:1,co:3,ch:1.5,hs:3,hc:3,fj:"fr",dp1:2,dp2:2,di:400,orth:3,os:200,oc:280,ol:200,ki:1,la:1,ra:1,m65:1,m30:"-",note:""},
+  express_170:{label:"MGC EXPRESS 170",go:1,gh:1,so:1,sh:1,psy:1,co:1,ch:1,hs:1,hc:1,fj:"fr",dp1:1,dp2:1,di:0,orth:1,os:70,oc:100,ol:80,ki:1,la:1,ra:1,m65:1,m30:"-",note:""},
+  express_250:{label:"MGC EXPRESS 250",go:1,gh:1,so:1.5,sh:1,psy:1,co:1.5,ch:1,hs:2,hc:2,fj:"fr",dp1:1.25,dp2:1.25,di:200,orth:1.5,os:100,oc:130,ol:100,ki:1,la:1,ra:1,m65:1,m30:"-",note:""},
+  express_300:{label:"MGC EXPRESS 300",go:1,gh:1,so:2,sh:1,psy:1,co:2,ch:1,hs:2.5,hc:2.5,fj:"fr",dp1:1.5,dp2:1.5,di:300,orth:2,os:150,oc:200,ol:150,ki:1,la:1,ra:1,m65:1,m30:"-",note:""},
+  senior_160:{label:"MGC Senior EXPRESS 160",go:1,gh:1,so:1,sh:1,psy:1,co:1,ch:1,hs:1,hc:1,fj:"fr",dp1:1.25,dp2:1.25,di:150,orth:1,os:60,oc:90,ol:60,ki:1,la:1,ra:1,m65:1,m30:"-",note:""},
+  senior_280:{label:"MGC Senior EXPRESS 280",go:1,gh:1,so:2,sh:1,psy:1,co:2,ch:1,hs:2,hc:2,fj:"fr",dp1:1.5,dp2:1.5,di:250,orth:1.5,os:110,oc:150,ol:110,ki:1,la:1,ra:1,m65:1,m30:"-",note:""},
+  senior_320:{label:"MGC Senior EXPRESS 320",go:1,gh:1,so:2.5,sh:1.5,psy:1,co:2.5,ch:1.5,hs:2.5,hc:2.5,fj:"fr",dp1:2,dp2:2,di:350,orth:2,os:160,oc:220,ol:160,ki:1,la:1,ra:1,m65:1,m30:"-",note:""}
+};
+var LM={eco_lab:"essentiel_eco",ess_lab:"essentiel",essplus_lab:"essentiel_plus",ser_lab:"serenite",cnf_lab:"confort",cnfp_lab:"confort_plus",cnfx_lab:"confort_extra"};
+Object.keys(LM).forEach(function(k){
+  var b=C[LM[k]]; var o={};
+  Object.keys(b).forEach(function(p){o[p]=b[p];});
+  o.label=b.label+" Labellisee";
+  C[k]=o;
+});
+
+// acte key mapper (option value -> contrat key)
+var AK={go:"go",gh:"gh",so:"so",sh:"sh",psy:"psy",co:"co",ch:"ch",hs:"hs",hc:"hc",fj:"fj",dp1:"dp1",dp2:"dp2",di:"di",orth:"orth",os:"os",oc:"oc",ol:"ol",ki:"ki",la:"la",ra:"ra",m65:"m65",m30:"m30"};
+
+var R={
+  RG:{label:"Regime General",tg:.70,ts:.70,th:.80,td:.70,tk:.60,tl:.60,tr:.70,t65:.65,t30:.30,pf:1,spec:"Regime de reference. Ticket moderateur 30% soins courants, 20% hospitalisation. Participation forfaitaire 1 euro/acte."},
+  TNS:{label:"TNS / Independant",tg:.70,ts:.70,th:.80,td:.70,tk:.60,tl:.60,tr:.70,t65:.65,t30:.30,pf:1,spec:"Integre au regime general depuis la suppression du RSI. Memes taux que le RG."},
+  AE:{label:"Auto-entrepreneur",tg:.70,ts:.70,th:.80,td:.70,tk:.60,tl:.60,tr:.70,t65:.65,t30:.30,pf:1,spec:"Affilie au regime general. Droits conditionnes au CA declare."},
+  CHOM:{label:"Chomeur indemnise (ARE)",tg:.70,ts:.70,th:.80,td:.70,tk:.60,tl:.60,tr:.70,t65:.65,t30:.30,pf:1,spec:"Maintien des droits pendant l'indemnisation. Meme taux que le RG."},
+  FPE:{label:"Fonction publique Etat",tg:.70,ts:.70,th:1,td:.70,tk:.60,tl:.60,tr:.70,t65:.65,t30:.30,pf:1,spec:"Soins courants : meme taux que le RG. Hospitalisation a 100% (accident de service). Participation employeur aux mutuelles labellisees minimum 15 euros/mois."},
+  FPT:{label:"Fonction publique territoriale",tg:.70,ts:.70,th:1,td:.70,tk:.60,tl:.60,tr:.70,t65:.65,t30:.30,pf:1,spec:"Depuis 2022 : participation employeur obligatoire >= 50% du contrat labellise. Hospi 100%."},
+  FPH:{label:"Fonction publique hospitaliere",tg:.70,ts:.70,th:1,td:.70,tk:.60,tl:.60,tr:.70,t65:.65,t30:.30,pf:1,spec:"Agents hospitaliers. Memes regles que FP Territoriale depuis la reforme 2022."},
+  MSAL:{label:"MSA Salarie agricole",tg:.70,ts:.70,th:.80,td:.70,tk:.60,tl:.60,tr:.70,t65:.65,t30:.30,pf:1,spec:"Regime gere par la MSA. Taux identiques au RG. Guichet unique."},
+  MEXP:{label:"MSA Exploitant agricole",tg:.70,ts:.70,th:.80,td:.70,tk:.60,tl:.60,tr:.70,t65:.65,t30:.30,pf:1,spec:"Chef d'exploitation agricole. Cotisations sur revenu professionnel. Taux maladie alignes sur le RG."},
+  SNCF:{label:"Regime SNCF",tg:.80,ts:.80,th:1,td:.80,tk:.75,tl:.75,tr:.80,t65:.80,t30:.30,pf:0,spec:"Regime special favorable. TM reduit a 20% (soins courants). Hospi 100%. Pas de participation forfaitaire."},
+  SNCF_A:{label:"SNCF Actifs",tg:.70,ts:.70,th:1,td:1,tk:.60,tl:.60,tr:.70,t65:.65,t30:.15,pf:0,spec:"Actifs SNCF (CPRP). Soins courants 70%, Hospi 100%, Dentaire 100%, Médicaments SMR faible 15%. Pas de PF."},
+  SNCF_R:{label:"SNCF Retraites",tg:.75,ts:.75,th:1,td:.75,tk:1,tl:.75,tr:.75,t65:.75,t30:.75,pf:0,spec:"Retraites SNCF (CPRP). Soins courants 75%, Hospi 100%, Materiel medical 100%, Medicaments SMR faible 75%. Pas de PF."},
+  RATP:{label:"Regime RATP",tg:.80,ts:.80,th:1,td:.80,tk:.75,tl:.75,tr:.80,t65:.80,t30:.30,pf:0,spec:"Identique au regime SNCF. TM 20%, Hospi 100%, pas de PF."},
+  MINE:{label:"Regime des Mines",tg:.80,ts:.80,th:1,td:.80,tk:.75,tl:.75,tr:.80,t65:.80,t30:.30,pf:0,spec:"Regime historiquement favorable (CANSSM). En cours d'alignement pour les nouveaux affilies."},
+  ENRM:{label:"Marins (ENIM)",tg:.75,ts:.75,th:1,td:.75,tk:.70,tl:.70,tr:.75,t65:.65,t30:.30,pf:.5,spec:"ENIM. TM 25% soins courants. Hospi 100%. Participation forfaitaire reduite a 0,50 euro."},
+  CVMC:{label:"Clerge (CAVIMAC)",tg:.70,ts:.70,th:.80,td:.70,tk:.60,tl:.60,tr:.70,t65:.65,t30:.30,pf:1,spec:"CAVIMAC : ministres des cultes et membres des congregations religieuses. Taux alignes sur le RG."},
+  BDFR:{label:"Banque de France",tg:.80,ts:.80,th:1,td:.80,tk:.75,tl:.75,tr:.80,t65:.80,t30:.30,pf:0,spec:"Regime special tres favorable. TM 20%, Hospi 100%, pas de PF."},
+  PARL:{label:"Senat / Assemblee Nationale",tg:.80,ts:.80,th:1,td:.80,tk:.75,tl:.75,tr:.80,t65:.80,t30:.30,pf:0,spec:"Regime special fonctionnaires parlementaires. TM pris en charge par l'institution."},
+  ETUD:{label:"Etudiant",tg:.70,ts:.70,th:.80,td:.70,tk:.60,tl:.60,tr:.70,t65:.65,t30:.30,pf:1,spec:"Depuis sept. 2019 : rattache au regime general des parents. Boursiers eligibles a la CSS."},
+  APPR:{label:"Apprenti",tg:.70,ts:.70,th:.80,td:.70,tk:.60,tl:.60,tr:.70,t65:.65,t30:.30,pf:1,spec:"Affilie au regime general des le debut du contrat. Peut rester ayant droit des parents jusqu'a 26 ans."},
+  AYDT:{label:"Ayant droit",tg:.70,ts:.70,th:.80,td:.70,tk:.60,tl:.60,tr:.70,t65:.65,t30:.30,pf:1,spec:"Memes remboursements que l'assure principal. PUMa : droits propres possibles meme sans emploi."},
+  CSS:{label:"CSS (ex-CMU-C)",tg:1,ts:1,th:1,td:1,tk:1,tl:1,tr:1,t65:1,t30:1,pf:0,spec:"Prend en charge 100% du ticket moderateur. Pas d'avance de frais. La mutuelle joue un role residuel."}
+};
+
+var HINTS={
+  RG:"Taux standard. PF 1 euro/acte (non recuperable sur contrat responsable).",
+  TNS:"Memes remboursements que le RG depuis l'integration du RSI.",
+  AE:"Meme taux que le RG. Droits lies au CA declare.",
+  CHOM:"Droits maintenus pendant l'ARE. Meme taux que le RG.",
+  FPE:"Hospi 100%. Participation employeur sur mutuelles labellisees.",
+  FPT:"Hospi 100%. Employeur territorial >= 50% contrat labellise depuis 2022.",
+  FPH:"Hospi 100%. Memes regles que FP Territoriale.",
+  MSAL:"MSA guichet unique. Memes taux que le RG.",
+  MEXP:"MSA non-salarie. Memes remboursements maladie que le RG.",
+  SNCF:"Regime tres favorable : TM 20%, Hospi 100%, pas de PF.",
+  SNCF_A:"CPRP Actifs : soins courants 70%, hospi 100%, dentaire 100%, médicaments SMR faible 15%, pas de PF.",
+  SNCF_R:"CPRP Retraites : soins courants 75%, hospi 100%, materiel medical 100%, medicaments SMR faible 75%, pas de PF.",
+  RATP:"Meme niveau que SNCF. TM 20%, Hospi 100%.",
+  MINE:"Favorable (droits acquis). Alignement en cours pour les nouveaux.",
+  ENRM:"ENIM. Hospi 100%, TM 25%. PF reduite a 0,50 euro.",
+  CVMC:"CAVIMAC. Memes taux que le RG.",
+  BDFR:"Tres favorable : TM 20%, Hospi 100%, pas de PF.",
+  PARL:"Favorable pour fonctionnaires parlementaires.",
+  ETUD:"Rattache au RG depuis 2019. Boursiers eligibles CSS.",
+  APPR:"Affilie au RG. Cumul possible avec droits parentaux jusqu'a 26 ans.",
+  AYDT:"Memes remboursements que l'assure principal.",
+  CSS:"TM 100% pris en charge. Pas d'avance de frais."
+};
+
+var TAUX_KEY={go:"tg",gh:"tg",so:"ts",sh:"ts",psy:"ts",co:"ts",ch:"ts",hs:"th",hc:"th",fj:"th",dp1:"td",dp2:"td",di:"td",orth:"td",os:null,oc:null,ol:null,ki:"tk",la:"tl",ra:"tr",m65:"t65",m30:"t30"};
+var BR={go:26.5,gh:26.5,so:30,sh:30,psy:32,co:50,ch:50,hs:300,hc:120,fj:22.06,dp1:70,dp2:70,di:0,orth:193.5,os:0,oc:0,ol:0,ki:8.35,la:20,ra:50,m65:20,m30:10};
+var TYP={go:26.5,gh:45,so:50,sh:90,psy:32,co:80,ch:130,hs:400,hc:200,fj:22.06,dp1:70,dp2:150,di:1500,orth:400,os:200,oc:400,ol:300,ki:35,la:20,ra:70,m65:20,m30:10};
+var ALBL={go:"Generaliste OPTAM",gh:"Generaliste hors OPTAM",so:"Specialiste OPTAM",sh:"Specialiste hors OPTAM",psy:"Psychologue",co:"Chirurgie OPTAM",ch:"Chirurgie hors OPTAM",hs:"Sejour hospitalier",hc:"Honoraires chirurgien",fj:"Forfait journalier",dp1:"Prothese Panier 1",dp2:"Prothese Panier 2",di:"Implant dentaire",orth:"Orthodontie",os:"Verres simples",oc:"Verres complexes",ol:"Lentilles",ki:"Kinesitherapie",la:"Analyses labo",ra:"Imagerie OPTAM",m65:"Medicaments 65%",m30:"Medicaments 30%"};
+var AHINT={go:"BR fixee a 26,50 euros (tarif conventionnel secteur 1 / OPTAM).",gh:"La SS rembourse sur la BR de 26,50 euros meme si l'honoraire est superieur.",so:"BR de reference 30 euros pour les specialistes OPTAM.",sh:"Honoraires libres. SS rembourse uniquement sur la BR de 30 euros.",psy:"12 seances/an sur prescription (Mon Soutien Psy). Tarif rembourse : 32 euros.",co:"Acte chirurgical ambulatoire ou technique, praticien OPTAM.",ch:"Depassements libres. SS rembourse sur la BR uniquement.",hs:"Tarif journalier de prestation (TJP). Chambre particuliere en supplement.",hc:"Honoraires du chirurgien lors d'une hospitalisation (praticien OPTAM).",fj:"Non rembourse par la SS. Pris en charge par les contrats responsables.",dp1:"Panier RAC 0 : SS + mutuelle couvrent 100% du tarif plafonne.",dp2:"Honoraires maitrises mais depassements possibles. La mutuelle compense.",di:"Non rembourse par la SS. MGC verse un forfait annuel fixe.",orth:"BR de 193,50 euros/semestre pour enfants jusqu'a 16 ans.",os:"Non rembourse par la SS depuis la reforme 100% Sante. Forfait annuel MGC.",oc:"Verres progressifs ou forte correction. Forfait MGC plus eleve.",ol:"Non remboursees par la SS (sauf keratocone). Forfait annuel MGC.",ki:"Acte AMK/AMS. BR ~8,35 euros.",la:"Biologie conventionnee. Remboursement SS a 60%.",ra:"Radiologie, echographie, scanner. Praticien OPTAM.",m65:"Medicaments vignette blanche (SMR important). Remb. a 65%.",m30:"Medicaments vignette bleue (SMR modere). Remb. a 30%."};
+
+// ─── Parseur de valeur TDG → composantes de la formule STS-AMC ──────────────
+// Retourne {pctTR, forfait, pctDR, pctTM, pctPMSS, plafond, plafondUnite, nonCouvert}
+var PMSS = 3864; // Plafond Mensuel SS 2024
+
+function parseTDG(val) {
+  var r = {pctTR:0, forfait:0, pctDR:0, pctTM:0, pctPMSS:0,
+           plafond:Infinity, plafondUnite:"", nonCouvert:false};
+  if(val==="-"||val===undefined||val===null||val===0) { r.nonCouvert=true; return r; }
+
+  var s = String(val).trim().replace(/\u2009/g," ");
+
+  // "frais réels" → %DR = 100%
+  if(/frais.r.els/i.test(s)) { r.pctDR=1; return r; }
+
+  // Cherche un % (ex "140%", "100 %")
+  var mPct = s.match(/(\d+(?:\.\d+)?)\s*%/);
+  if(mPct) r.pctTR = parseFloat(mPct[1])/100;
+
+  // Cherche un multiplicateur pur (ex "1.5", "2") — si pas de %
+  if(!mPct) {
+    var mMult = s.match(/^(\d+(?:\.\d+)?)$/);
+    if(mMult) { var n=parseFloat(mMult[1]); if(n<=10) r.pctTR=n; else r.forfait=n; }
+  }
+
+  // Cherche un forfait € additionnel (ex "+ 200 €", "+ 40€/jour")
+  var mEurPlus = s.match(/\+\s*(\d+(?:\.\d+)?)\s*€/);
+  if(mEurPlus) r.forfait += parseFloat(mEurPlus[1]);
+
+  // Forfait pur sans % (ex "60 €/an", "40€/jour", "22€")
+  if(!mPct && !s.match(/^(\d+(?:\.\d+)?)$/) && !r.forfait) {
+    var mEur = s.match(/(\d+(?:\.\d+)?)\s*€/);
+    if(mEur) r.forfait = parseFloat(mEur[1]);
+  }
+
+  // Plafond avec unité : "/jour", "/an", "/acte", "/prothèse", "/semestre", "/oreille"
+  var mPlaf = s.match(/(\d[\d\s]*)\s*€\s*\/\s*(jour|an|acte|proth|semestre|oreille|mois|œil)/i);
+  if(mPlaf) { r.plafond=parseFloat(mPlaf[1].replace(/\s/g,"")); r.plafondUnite=mPlaf[2].toLowerCase(); }
+
+  // PMSS (rare)
+  var mPMSS = s.match(/(\d+(?:\.\d+)?)\s*%\s*PMSS/i);
+  if(mPMSS) { r.pctPMSS=parseFloat(mPMSS[1])/100; r.pctTR=0; }
+
+  return r;
+}
+
+// ─── Calcul STS-AMC : MGC = Min(DR-MRO, Plafond, Base) ─────────────────────
+function calcSTS(dr, mro, br, taux, tdgVal) {
+  var g = parseTDG(tdgVal);
+  if(g.nonCouvert) return {mgc:0, base:0, plaf:0, detail:"Non couvert"};
+
+  var TM  = Math.max(0, br*(1-taux));          // ticket modérateur
+  var base = br*g.pctTR                         // %TR (multiplicateur BR)
+           + g.forfait                           // forfait fixe
+           + g.pctDR*dr                          // %DR (frais réels)
+           + g.pctTM*TM                          // %TM
+           + g.pctPMSS*PMSS;                     // %PMSS
+
+  // La base représente le total SS+MGC → la part MGC = base - MRO
+  // sauf si c'est un forfait pur (pctTR=0, pas de lien avec BR)
+  var mgc_base;
+  if(g.pctTR>0 || g.pctDR>0 || g.pctTM>0 || g.pctPMSS>0) {
+    mgc_base = Math.max(0, base - mro);
+  } else {
+    // Forfait pur : la MGC verse le forfait directement
+    mgc_base = g.forfait;
+  }
+
+  var dr_mro   = Math.max(0, dr - mro);        // DR - MRO
+  var plafond  = isFinite(g.plafond) ? g.plafond : Infinity;
+
+  var mgc = Math.min(dr_mro, isFinite(plafond)?plafond:mgc_base, mgc_base);
+  mgc = Math.max(0, mgc);
+
+  return {
+    mgc: mgc,
+    base: base,
+    mgc_base: mgc_base,
+    dr_mro: dr_mro,
+    plafond: plafond,
+    plafondUnite: g.plafondUnite,
+    pctTR: g.pctTR,
+    forfait: g.forfait,
+    pctDR: g.pctDR,
+    pctTM: g.pctTM,
+    pctPMSS: g.pctPMSS,
+    TM: TM
+  };
+}
+
+function eur(n){return isNaN(n)?"?":n.toFixed(2).replace(".",",")+" €";}
+function pct(n){return Math.round(n*100)+"%";}
+function id(s){return document.getElementById(s);}
+
+function addStep(num,name,formula,result){
+  var d=document.createElement("div");
+  d.className="stp";
+  var res=result?"<span class='sr'> =&gt; "+result+"</span>":"";
+  d.innerHTML="<div class='sn'>"+num+"</div><div class='sb'><span class='snm'>"+name+"</span><span class='sf'>"+formula+"</span>"+res+"</div>";
+  id("steps").appendChild(d);
+}
+
+window.simuler=function(){
+  var cid=id("contrat").value;
+  var rid=id("regime").value;
+  var aid=id("acte").value;
+  var mv=parseFloat(id("montant").value);
+  if(!cid||!rid||!aid){alert("Veuillez selectionner un contrat, un regime et un acte.");return;}
+
+  var co=C[cid];
+  var re=R[rid];
+  var mt=(isNaN(mv)||mv<=0)?TYP[aid]:mv;
+  var ck=AK[aid]||aid;
+  var mgcVal=co[ck];
+  var br=BR[aid];
+  var tk=TAUX_KEY[aid];
+
+  id("steps").innerHTML="";
+  id("notes").innerHTML="";
+
+  var secu=0,mgc=0,rac=0,n=1;
+  var notesArr=[];
+  var typLabel=(mt===TYP[aid])?" (montant typique — saisissez le votre pour plus de precision)":"";
+
+  // ── Étape 1 : Dépense Réelle ──
+  addStep(n++,"Dépense Réelle (DR)","Montant facturé au patient = "+eur(mt)+typLabel,"DR = "+eur(mt));
+
+  // ── Étape 2 : Remboursement SS (MRO) ──
+  var taux = tk ? re[tk] : 0;
+  var pf   = re.pf || 0;
+  var mro_brut = br * taux;
+  secu = Math.max(0, mro_brut - pf);
+
+  if(br>0 && taux>0){
+    if(mt>br){
+      addStep(n++,"Base de Remboursement SS (BR)","BR = "+eur(br)+" · Dépassement = "+eur(mt-br)+" (non pris en charge par la SS)","BR = "+eur(br));
+    } else {
+      addStep(n++,"Base de Remboursement SS (BR)","BR = "+eur(br)+" · Honoraires dans la limite de la BR","Pas de dépassement");
+    }
+    var pfStr=pf>0?" − PF "+eur(pf)+" = "+eur(secu):"";
+    addStep(n++,"MRO — Remboursement SS ("+re.label+", taux "+pct(taux)+")","BR × taux = "+eur(br)+" × "+pct(taux)+" = "+eur(mro_brut)+pfStr,"MRO = "+eur(secu));
+  } else if(taux===0){
+    addStep(n++,"MRO — Remboursement SS","Acte non remboursé par la SS (taux = 0 %)","MRO = 0,00 €");
+  }
+
+  // ── Étape 3 : DR − MRO ──
+  var dr_mro = Math.max(0, mt - secu);
+  addStep(n++,"DR − MRO (gap à couvrir par la MGC)","DR "+eur(mt)+" − MRO "+eur(secu)+" = "+eur(dr_mro),"Gap = "+eur(dr_mro));
+
+  // ── Étape 4 : Calcul STS-AMC ──
+  if(mgcVal==="-"||mgcVal===undefined||mgcVal===null){
+    mgc=0;
+    addStep(n++,"Garantie MGC — "+co.label,"Acte non couvert par ce contrat","MGC = 0,00 €");
+  } else {
+    var res = calcSTS(mt, secu, br, taux, mgcVal);
+    mgc = res.mgc;
+
+    // Détail de la Base
+    var baseParts=[];
+    if(res.pctTR>0)   baseParts.push("% TR : "+eur(br)+" × "+pct(res.pctTR)+" = "+eur(br*res.pctTR));
+    if(res.forfait>0) baseParts.push("Forfait : "+eur(res.forfait));
+    if(res.pctDR>0)   baseParts.push("% DR : "+eur(mt)+" × "+pct(res.pctDR)+" = "+eur(mt*res.pctDR));
+    if(res.pctTM>0)   baseParts.push("% TM : "+eur(res.TM)+" × "+pct(res.pctTM)+" = "+eur(res.TM*res.pctTM));
+    if(res.pctPMSS>0) baseParts.push("% PMSS : "+eur(PMSS)+" × "+pct(res.pctPMSS)+" = "+eur(PMSS*res.pctPMSS));
+
+    addStep(n++,"Base de calcul MGC (contrat "+co.label+")",
+      baseParts.join(" + ")||"Forfait pur",
+      "Base SS+MGC = "+eur(res.base));
+
+    if(res.pctTR>0||res.pctDR>0||res.pctTM>0||res.pctPMSS>0){
+      addStep(n++,"Part MGC dans la base","Base "+eur(res.base)+" − MRO "+eur(secu)+" = "+eur(res.mgc_base),"MGC base = "+eur(res.mgc_base));
+    }
+
+    // Min(DR-MRO, Plafond, Base_MGC)
+    var minParts=["DR−MRO = "+eur(res.dr_mro), "Base MGC = "+eur(res.mgc_base)];
+    if(isFinite(res.plafond)) minParts.splice(1,0,"Plafond = "+eur(res.plafond)+(res.plafondUnite?"/"+res.plafondUnite:""));
+    addStep(n++,"Formule STS-AMC : Min ( "+minParts.join(" , ")+" )",
+      "Application de la règle de la dépense engagée",
+      "MGC = "+eur(mgc));
+
+    // Commentaire si plafond actif
+    if(isFinite(res.plafond) && mgc===res.plafond){
+      addStep(n++,"Plafond contractuel atteint","La garantie est limitée à "+eur(res.plafond)+(res.plafondUnite?" par "+res.plafondUnite:""),
+        "La MGC verse le plafond, pas la base calculée");
+    }
+    if(mgc===res.dr_mro && res.dr_mro < res.mgc_base){
+      addStep(n++,"Règle DR−MRO","La MGC ne peut pas rembourser plus que la dépense réelle nette (DR − MRO = "+eur(res.dr_mro)+")","Plafonnement à la dépense engagée");
+    }
+  }
+
+  // ── Étape 5 : RAC patient ──
+  rac = Math.max(0, mt - secu - mgc);
+  var racMsg = (rac===0)
+    ? "RAC patient = 0,00 € — SS + MGC couvrent l'intégralité de la dépense."
+    : "RAC patient = "+eur(rac)+" — montant définitif à la charge du patient après MRO ("+eur(secu)+") et MGC ("+eur(mgc)+").";
+  addStep(n++,"Reste à charge patient (RAC)","DR "+eur(mt)+" − MRO "+eur(secu)+" − MGC "+eur(mgc)+" = "+eur(rac),racMsg);
+
+  notesArr.push(AHINT[aid]);
+  notesArr.push(re.label+" : "+re.spec);
+  if(pf>0) notesArr.push("La participation forfaitaire de "+eur(pf)+" est déduite du remboursement SS. Les contrats responsables ne peuvent légalement pas la rembourser.");
+
+  // Affichage
+  id("rTitle").textContent=ALBL[aid]+" — "+co.label;
+  id("rSub").innerHTML="<span class='tag'>"+re.label+"</span> Montant simulé : "+eur(mt)+typLabel;
+  id("rM").textContent=eur(mt);
+  id("rS").textContent=eur(secu);
+  id("rG").textContent=eur(mgc);
+  id("rR").textContent=eur(rac);
+  id("notes").innerHTML=notesArr.map(function(s){return "<p>&#x2022; "+s+"</p>";}).join("");
+  id("res").style.display="block";
+  id("res").scrollIntoView({behavior:"smooth"});
+  buildComparison(cid, rid, aid, mt);
+};
+
+// ─── Tableau comparatif tous contrats ────────────────────────────────────────
+var CONTRAT_GROUPS=[
+  {label:"Zen",keys:["zen_hospi","zen_eco","zen","zen_plus","zen_extra"]},
+  {label:"Essentiel / Sérénité / Confort",keys:["essentiel_eco","essentiel","essentiel_plus","serenite","confort","confort_plus","confort_extra"]},
+  {label:"Labellisés",keys:["eco_lab","ess_lab","essplus_lab","ser_lab","cnf_lab","cnfp_lab","cnfx_lab"]},
+  {label:"Ritmavie",keys:["ritmavie_100","ritmavie_200","ritmavie_300","ritmavie_400"]},
+  {label:"MGC EXPRESS",keys:["express_170","express_250","express_300"]},
+  {label:"Senior EXPRESS",keys:["senior_160","senior_280","senior_320"]},
+];
+
+function calcOne(ckey, rid, aid, mt){
+  var co=C[ckey], re=R[rid];
+  if(!co||!re) return null;
+  var ck=AK[aid]||aid;
+  var mgcVal=co[ck];
+  var br=BR[aid];
+  var tk=TAUX_KEY[aid];
+  var taux=tk?re[tk]:0;
+  var pf=re.pf||0;
+  var mro_brut=br*taux;
+  var secu=Math.max(0,mro_brut-pf);
+  var res=calcSTS(mt,secu,br,taux,mgcVal);
+  var mgc=res.mgc;
+  var rac=Math.max(0,mt-secu-mgc);
+  return {secu:secu, mgc:mgc, rac:rac};
+}
+
+function fmtN(n){
+  if(isNaN(n)) return "—";
+  return n.toFixed(2).replace(".",",")+" €";
+}
+
+function buildComparison(selectedCid, rid, aid, mt){
+  var body=id("compBody");
+  body.innerHTML="";
+
+  id("compTitle").textContent=ALBL[aid]+" · "+R[rid].label;
+  id("compActe").textContent=ALBL[aid];
+  id("compRegime").textContent=R[rid].label;
+  id("compMontant").textContent=fmtN(mt);
+
+  CONTRAT_GROUPS.forEach(function(grp){
+    // Header de groupe
+    var trH=document.createElement("tr");
+    trH.className="grp-hd";
+    trH.innerHTML="<td colspan='5'>"+grp.label+"</td>";
+    body.appendChild(trH);
+
+    grp.keys.forEach(function(ckey){
+      var co=C[ckey];
+      if(!co) return;
+      var res=calcOne(ckey, rid, aid, mt);
+      var tr=document.createElement("tr");
+      if(ckey===selectedCid) tr.className="selected";
+
+      var racClass=(res&&res.rac===0)?"rac-zero":"rac";
+      var mgcTxt=res?fmtN(res.mgc):"—";
+      var secuTxt=res?fmtN(res.secu):"—";
+      var racTxt=res?fmtN(res.rac):"—";
+
+      tr.innerHTML=
+        "<td class='name'>"+(ckey===selectedCid?"&#x25B6; ":"")+co.label+"</td>"+
+        "<td>"+fmtN(mt)+"</td>"+
+        "<td class='secu'>"+secuTxt+"</td>"+
+        "<td class='mgc'>"+mgcTxt+"</td>"+
+        "<td class='"+racClass+"'>"+racTxt+"</td>";
+      body.appendChild(tr);
+    });
+  });
+
+  id("compCard").style.display="block";
+}
+
+window.resetForm=function(){
+  ["contrat","regime","acte"].forEach(function(i){id(i).value="";});
+  id("montant").value="";
+  id("hintBox").style.display="none";
+  id("res").style.display="none";
+  id("compCard").style.display="none";
+};
+
+window.showHint=function(){
+  var rid=id("regime").value;
+  var box=id("hintBox");
+  if(rid&&HINTS[rid]){box.textContent=HINTS[rid];box.style.display="block";}
+  else{box.style.display="none";}
+};
+
+window.prefill=function(){
+  var aid=id("acte").value;
+  if(aid&&TYP[aid]){id("montant").placeholder="Typique : "+TYP[aid]+" euros";}
+};
+
+
+})();
+</script>
+</body>
+</html>
