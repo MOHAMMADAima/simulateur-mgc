@@ -72,10 +72,9 @@ Le tableau comparatif et le fichier Excel permettent de dégager des indicateurs
 
 ---
 
-## Aperçu
+## Aperçu du simulateur : 
 
-> *<img width="767" height="467" alt="image" src="https://github.com/user-attachments/assets/27584ae1-055a-4d89-8939-573ae6357fd3" />
-*
+> *<img width="767" height="467" alt="image" src="https://github.com/user-attachments/assets/27584ae1-055a-4d89-8939-573ae6357fd3" />*
 
 ---
 
